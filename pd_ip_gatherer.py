@@ -1,8 +1,7 @@
 """
 Gather PagerDuty webhook IP safelist from their help documents repo
 
-This is to replace an extremely useful endpoint they are removing for some
-reason that would provide a simple, programmatically consumable IP list. Smile.
+This replaces an extremely useful endpoint being removed on 05/05/2022.
 
 https://github.com/PagerDuty/developer-docs
 
