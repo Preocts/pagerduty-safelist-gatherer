@@ -32,3 +32,21 @@ export PDIPGATHER_ROUTE="/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook
 
 - [Development Installation Guide](docs/development.md)
 - [Repo documentation](docs/)
+
+---
+
+## Example Usage
+
+Output to console:
+
+```bash
+$ python pd_ip_gatherer.py
+```
+
+Importing as module:
+
+```py
+import pd_ip_gatherer
+
+ip_list = pd_ip_gatherer.get_safelist()
+```
