@@ -57,9 +57,6 @@ python -m pip install --upgrade pip wheel setuptools
 
 # Install development requirements
 python -m pip install -r requirements-dev.txt
-
-# Install editable version of library
-python -m pip install --editable .
 ```
 
 Install pre-commit [(see below for details)](#pre-commit):
