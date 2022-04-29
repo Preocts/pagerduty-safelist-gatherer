@@ -1,5 +1,5 @@
 """
-Gather PagerDuty webhook IP safelist from their help documents repo
+Gather PagerDuty webhook IP safelist from their help documents repo.
 
 This replaces an extremely useful endpoint being removed on 05/05/2022.
 
@@ -18,7 +18,7 @@ The url for the safelist is hardcoded, however you can override it.
 Example Usage:
 
     Output to console:
-        $ python pd_ip_gatherer.py
+        $ pd-ip-gatherer
 
     Importing as module:
         import pd_ip_gatherer
@@ -42,12 +42,12 @@ TIMEOUT_SECONDS = 3
 log = logging.getLogger(__name__)
 
 
-def extract_ip_addresses(text: str) -> list[str]:
-    """Extract all IP addresses from given string, can return empty list"""
+def _extract_ip_addresses(text: str) -> list[str]:
+    """Extract all IP addresses from given string, can return empty list."""
     return IP_PATTERN.findall(text)
 
 
-def get_developer_doc() -> str | None:
+def _get_developer_doc() -> str | None:
     """Pull developer doc from PagerDuty's GitHub page."""
     override_url = os.getenv("PDIPGATHER_URL")
     override_route = os.getenv("PDIPGATHER_ROUTE")
@@ -68,10 +68,15 @@ def get_developer_doc() -> str | None:
 
 
 def get_safelist() -> list[str]:
-    """Rerturn all safelist IPs (US and Euro region) in the form of a list"""
-    return extract_ip_addresses(get_developer_doc() or "")
+    """Return all safelist IPs (US and Euro region) in the form of a list."""
+    return _extract_ip_addresses(_get_developer_doc() or "")
+
+
+def _console_output() -> int:
+    """Print all safelist IPs, new-line separated, to the stdout."""
+    print("\n".join(get_safelist()))
+    return 0
 
 
 if __name__ == "__main__":
-    print("\n".join(get_safelist()))
-    raise SystemExit(0)
+    raise SystemExit(_console_output())
