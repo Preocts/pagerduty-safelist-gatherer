@@ -30,13 +30,13 @@ EXPECTED_IPS = {
     ),
 )
 def test_extract_ip_addresses(address: str) -> None:
-    results = pdip.extract_ip_addresses(address)
+    results = pdip._extract_ip_addresses(address)
 
     assert results[0] == address
 
 
 def test_extract_ip_addresses_from_sample() -> None:
-    results = pdip.extract_ip_addresses(SAMPLE)
+    results = pdip._extract_ip_addresses(SAMPLE)
 
     print(results)
 
@@ -51,7 +51,7 @@ def test_get_developer_doc_success() -> None:
     }
     with patch.dict(os.environ, mocker):
 
-        result = pdip.get_developer_doc()
+        result = pdip._get_developer_doc()
 
     assert result
     assert result.startswith(expected_starts_with)
@@ -64,7 +64,7 @@ def test_get_developer_doc_failure() -> None:
     }
     with patch.dict(os.environ, mocker):
 
-        result = pdip.get_developer_doc()
+        result = pdip._get_developer_doc()
 
     assert result is None
 
