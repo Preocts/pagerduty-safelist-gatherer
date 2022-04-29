@@ -1,5 +1,7 @@
 """Tests for sample"""
 import os
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -79,3 +81,19 @@ def test_get_safelist() -> None:
         results = pdip.get_safelist()
 
     assert len(set(results) - EXPECTED_IPS) == 0
+
+
+def test_console_out() -> None:
+    mocker = {
+        "PDIPGATHER_URL": "raw.githubusercontent.com",
+        "PDIPGATHER_ROUTE": "/Preocts/pagerduty-safelist-gatherer/main/tests/fixture_sample.md",  # noqa E501
+    }
+    with patch.dict(os.environ, mocker):
+        with redirect_stdout(StringIO()) as con_cap:
+
+            result = pdip._console_output()
+
+            clean_capture = {line for line in con_cap.getvalue().split("\n") if line}
+
+    assert result == 0
+    assert len(clean_capture - EXPECTED_IPS) == 0
