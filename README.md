@@ -4,12 +4,23 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Python package](https://github.com/Preocts/pagerduty-safelist-gatherer/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/Preocts/pagerduty-safelist-gatherer/actions/workflows/python-tests.yml)
 
-Gather PagerDuty webhook IP safelist from their help documents repo
+Gather PagerDuty webhook IP safelist from their help documents repo.
 
-This replaces an extremely useful endpoint being removed on 05/05/2022.
+This replaces an extremely useful endpoint being removed on 05/05/2022. The
+IPs pulled include both US and EU ranges with no distinction between them. Until
+05/05/2022 both sources of truth are pulled and compiled into a single return.
+
+Support Documentation:
+
+https://support.pagerduty.com/docs/safelist-ips#webhooks
+
+Developer Documentation:
+
+https://developer.pagerduty.com/docs/ZG9jOjQ4OTcxMDMx-webhook-i-ps
+
+Documentation Repo:
 
 https://github.com/PagerDuty/developer-docs
-
 https://raw.githubusercontent.com/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md
 
 The url for the safelist is hardcoded, however you can override it.
@@ -42,7 +53,7 @@ pip install git+https://github.com/Preocts/pagerduty-safelist-gatherer@?.?.?
 Output to console:
 
 ```bash
-$ pagerduty-safelist
+$ pd-ip-gatherer
 ```
 
 Importing as module:
