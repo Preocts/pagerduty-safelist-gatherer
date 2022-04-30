@@ -110,7 +110,7 @@ def test_appsite_webhooks() -> None:
     assert results
 
 
-def tet_appsite_post_eol_date() -> None:
+def test_appsite_post_eol_date() -> None:
     hold_value = pdip.WEBHOOKSITE_EOL
     try:
         pdip.WEBHOOKSITE_EOL = datetime(2021, 5, 5, 14, 0, 0)
