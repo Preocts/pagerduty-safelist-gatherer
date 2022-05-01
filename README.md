@@ -6,9 +6,10 @@
 
 Gather PagerDuty webhook IP safelist from their help documents repo.
 
-This replaces an extremely useful endpoint being removed on 05/05/2022. The
-IPs pulled include both US and EU ranges with no distinction between them. Until
-05/05/2022 both sources of truth are pulled and compiled into a single return.
+This replaces an extremely useful endpoint being removed on 05/05/2022 at 14:00UTC.
+
+IPs pulled can include both US and EU ranges or from a specific region.
+Until 05/05/2022 both sources of truth are pulled and compiled into a single return.
 
 Support Documentation:
 
@@ -21,18 +22,12 @@ https://developer.pagerduty.com/docs/ZG9jOjQ4OTcxMDMx-webhook-i-ps
 Documentation Repo:
 
 https://github.com/PagerDuty/developer-docs
-https://raw.githubusercontent.com/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md
 
-The url for the safelist is hardcoded, however you can override it.
+Target sources:
 
-- Set `PDIPGATHER_URL` environ variable to the desired url (no HTTPS://)
-- Set `PDIPGATHER_ROUTE` environ variable to the desired route
+https://developer.pagerduty.com/ip-safelists/webhooks-us-service-region-json
 
-Example (shows defaults):
-```bash
-export PDIPGATHER_URL="raw.githubusercontent.com"
-export PDIPGATHER_ROUTE="/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md
-```
+https://developer.pagerduty.com/ip-safelists/webhooks-eu-service-region-json
 
 ## Requirements
 
@@ -52,8 +47,10 @@ pip install git+https://github.com/Preocts/pagerduty-safelist-gatherer@?.?.?
 
 Output to console:
 
+*Optional "us" or "eu" will limit results to that region. Default is both regions*
+
 ```bash
-$ pd-ip-gatherer
+$ pd-ip-gatherer [eu|us]
 ```
 
 Importing as module:
@@ -61,7 +58,9 @@ Importing as module:
 ```py
 import pd_ip_gatherer
 
-ip_list = pd_ip_gatherer.get_safelist()
+full_ip_list = pd_ip_gatherer.get_all_safelist
+eu_ip_list = pd_ip_gatherer.get_eu_safelist
+us_ip_list = pd_ip_gatherer.get_us_safelist
 ```
 
 ---

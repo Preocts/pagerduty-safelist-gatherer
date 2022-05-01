@@ -1,123 +1,82 @@
 """Tests for sample"""
-import os
+from __future__ import annotations
+
 from contextlib import redirect_stdout
-from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
 
 import pd_ip_gatherer as pdip
 
-SAMPLE = Path("tests/fixture_sample.md").open().read()
-EXPECTED_IPS = {
-    "192.168.1.1",
-    "192.168.1.2",
-    "127.0.0.1",
-    "0.0.0.0",
-    "255.255.255.255",
-    "1.2.3.4",
-}
+EU_SAMPLE = Path("tests/fixture_sample_eu.json").open().read()
+US_SAMPLE = Path("tests/fixture_sample_us.json").open().read()
+
+EXPECTED_US_IPS = {"192.168.1.1"}
+EXPECTED_EU_IPS = {"192.168.1.2"}
 
 
 @pytest.mark.parametrize(
-    ("address"),
+    ("url", "route", "expected"),
     (
-        ("192.168.1.1"),
-        ("127.0.0.1"),
-        ("0.0.0.0"),
-        ("255.255.255.255"),
-        ("999.999.999.999"),
-        ("1.2.3.4"),
+        (
+            "raw.githubusercontent.com",
+            "/Preocts/pagerduty-safelist-gatherer/main/README.md",
+            True,
+        ),
+        (
+            "raw.githubusercontent.com",
+            "/Preocts/pagerduty-safelist-gatherer/main/not_there.md",
+            False,
+        ),
     ),
 )
-def test_extract_ip_addresses(address: str) -> None:
-    results = pdip._extract_ip_addresses(address)
+def test_get_url_page(url: str, route: str, expected: bool) -> None:
+    result = pdip._get_url_page(url, route)
 
-    assert results[0] == address
-
-
-def test_extract_ip_addresses_from_sample() -> None:
-    results = pdip._extract_ip_addresses(SAMPLE)
-
-    print(results)
-
-    assert len(set(results) - EXPECTED_IPS) == 0
+    assert bool(result) is expected
 
 
-def test_get_developer_doc_success() -> None:
-    expected_starts_with = "# pagerduty-safelist-gatherer"
-    mocker = {
-        "PDIPGATHER_URL": "raw.githubusercontent.com",
-        "PDIPGATHER_ROUTE": "/Preocts/pagerduty-safelist-gatherer/main/README.md",
-    }
-    with patch.dict(os.environ, mocker):
+@pytest.mark.parametrize(
+    ("func", "resp", "expected"),
+    (
+        (
+            pdip.get_all_safelist,
+            [US_SAMPLE, EU_SAMPLE, US_SAMPLE, EU_SAMPLE],
+            EXPECTED_US_IPS.union(EXPECTED_EU_IPS),
+        ),
+        (
+            pdip.get_us_safelist,
+            [US_SAMPLE, US_SAMPLE],
+            EXPECTED_US_IPS,
+        ),
+        (
+            pdip.get_eu_safelist,
+            [EU_SAMPLE, EU_SAMPLE],
+            EXPECTED_EU_IPS,
+        ),
+    ),
+)
+def test_get_safelists(func: Any, resp: list[str], expected: set[str]) -> None:
 
-        result = pdip._get_developer_doc()
+    with patch.object(pdip, "_get_url_page", side_effect=resp):
+        result = func()
 
-    assert result
-    assert result.startswith(expected_starts_with)
-
-
-def test_get_developer_doc_failure() -> None:
-    mocker = {
-        "PDIPGATHER_URL": "raw.githubusercontent.com",
-        "PDIPGATHER_ROUTE": "/Preocts/pagerduty-safelist-gatherer/main/EGG.md",
-    }
-    with patch.dict(os.environ, mocker):
-
-        result = pdip._get_developer_doc()
-
-    assert result is None
-
-
-def test_get_safelist() -> None:
-    mocker = {
-        "PDIPGATHER_URL": "raw.githubusercontent.com",
-        "PDIPGATHER_ROUTE": "/Preocts/pagerduty-safelist-gatherer/main/tests/fixture_sample.md",  # noqa E501
-    }
-    with patch.dict(os.environ, mocker):
-        with patch.object(pdip, "_get_appsite_webhooks", return_value=[]):
-
-            results = pdip.get_safelist()
-
-    assert len(set(results) - EXPECTED_IPS) == 0
+    assert len(result - expected) == 0
 
 
 def test_console_out() -> None:
-    mocker = {
-        "PDIPGATHER_URL": "raw.githubusercontent.com",
-        "PDIPGATHER_ROUTE": "/Preocts/pagerduty-safelist-gatherer/main/tests/fixture_sample.md",  # noqa E501
-    }
-    with patch.dict(os.environ, mocker):
-        with patch.object(pdip, "_get_appsite_webhooks", return_value=[]):
-            with redirect_stdout(StringIO()) as con_cap:
+    resps = [US_SAMPLE, EU_SAMPLE, US_SAMPLE, EU_SAMPLE]
+    expected = EXPECTED_US_IPS.union(EXPECTED_EU_IPS)
 
-                result = pdip._console_output()
+    with patch.object(pdip, "_get_url_page", side_effect=resps):
+        with redirect_stdout(StringIO()) as con_cap:
 
-                clean_capture = {
-                    line for line in con_cap.getvalue().split("\n") if line
-                }
+            result = pdip._console_output()
+
+            clean_capture = {line for line in con_cap.getvalue().split("\n") if line}
 
     assert result == 0
-    assert len(clean_capture - EXPECTED_IPS) == 0
-
-
-def test_appsite_webhooks() -> None:
-    results = pdip._get_appsite_webhooks()
-
-    assert results
-
-
-def test_appsite_post_eol_date() -> None:
-    hold_value = pdip.WEBHOOKSITE_EOL
-    try:
-        pdip.WEBHOOKSITE_EOL = datetime(2021, 5, 5, 14, 0, 0)
-
-        results = pdip._get_appsite_webhooks()
-
-        assert not results
-
-    finally:
-        pdip.WEBHOOKSITE_EOL = hold_value
+    assert len(clean_capture - expected) == 0

@@ -1,9 +1,10 @@
 """
 Gather PagerDuty webhook IP safelist from their help documents repo.
 
-This replaces an extremely useful endpoint being removed on 05/05/2022. The
-IPs pulled include both US and EU ranges with no distinction between them. Until
-05/05/2022 both sources of truth are pulled and compiled into a single return.
+This replaces an extremely useful endpoint being removed on 05/05/2022 at 14:00UTC.
+
+IPs pulled can include both US and EU ranges or from a specific region.
+Until 05/05/2022 both sources of truth are pulled and compiled into a single return.
 
 Support Documentation:
 
@@ -16,107 +17,139 @@ https://developer.pagerduty.com/docs/ZG9jOjQ4OTcxMDMx-webhook-i-ps
 Documentation Repo:
 
 https://github.com/PagerDuty/developer-docs
-https://raw.githubusercontent.com/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md
 
-The url for the safelist is hardcoded, however you can override it.
-    Set `PDIPGATHER_URL` environ variable to the desired url (no HTTPS://)
-    Set `PDIPGATHER_ROUTE` environ variable to the desired route
+Target sources:
 
-    Example (shows defaults):
-        PDIPGATHER_URL="raw.githubusercontent.com"
-        PDIPGATHER_ROUTE="/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md
+https://developer.pagerduty.com/ip-safelists/webhooks-us-service-region-json
+
+https://developer.pagerduty.com/ip-safelists/webhooks-eu-service-region-json
 
 Example Usage:
 
     Output to console:
-        $ pd-ip-gatherer
+    Optional "us" or "eu" will limit results to that region. Default is both regions
+
+        $ pd-ip-gatherer [eu|us]
 
     Importing as module:
+
         import pd_ip_gatherer
 
-        ip_list = pd_ip_gatherer.get_safelist()
+        full_ip_list = pd_ip_gatherer.get_all_safelist
+        eu_ip_list = pd_ip_gatherer.get_eu_safelist
+        us_ip_list = pd_ip_gatherer.get_us_safelist
 """
 from __future__ import annotations
 
 import json
 import logging
-import os
-import re
+import sys
 from datetime import datetime
 from http.client import HTTPSConnection
 
 
-# NOTE: Does not validate IP address ranges
-IP_PATTERN = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
-PDIPGATHER_URL = "raw.githubusercontent.com"
-PDIPGATHER_ROUTE = "/PagerDuty/developer-docs/main/docs/webhooks/11-Webhook-IPs.md"
+SOURCE_ROUTES: dict[str, list[str]] = {
+    "us": [
+        "developer.pagerduty.com",
+        "/ip-safelists/webhooks-us-service-region-json",
+    ],
+    "eu": [
+        "developer.pagerduty.com",
+        "/ip-safelists/webhooks-eu-service-region-json",
+    ],
+}
+OLD_SOURCE_ROUTES: dict[str, list[str]] = {
+    "us": ["app.pagerduty.com", "/webhook_ips"],
+    "eu": ["app.eu.pagerduty.com", "/webhook_ips"],
+}
+
+
 TIMEOUT_SECONDS = 3
 
 # Documented end of life date for programmatic endpoint
+# https://support.pagerduty.com/docs/safelist-ips#webhooks
 WEBHOOKSITE_EOL = datetime(2022, 5, 5, 14, 0, 0, 0)
 
 log = logging.getLogger(__name__)
 
 
-def _extract_ip_addresses(text: str) -> list[str]:
-    """Extract all IP addresses from given string, can return empty list."""
-    return IP_PATTERN.findall(text)
+def _get_url_page(url: str, route: str) -> str:
+    """
+    HTTPS GET request a url, return the text of the response.
 
+    Args:
+        url: URL of page to pull, exclude HTTPS:// (e.g. "app.pagerduty.com")
+        route: Route following url. e.g. "/webhook_ip"
 
-def _get_appsite_webhooks() -> list[str]:
-    """Pull IPs from app.pagerduty.com/webhook_ips site. Ends function on 05/05/2022"""
-    if datetime.utcnow() > WEBHOOKSITE_EOL:
-        return []
-
-    urls = ["app.pagerduty.com", "app.eu.pagerduty.com"]
-    full_list: list[str] = []
-
-    for url in urls:
-
-        conn = HTTPSConnection(host=url, timeout=TIMEOUT_SECONDS)
-
-        conn.request("GET", "/webhook_ips")
-        resp = conn.getresponse()
-
-        if resp.status not in range(200, 300):
-            log.error("Failed to get a response from /webhook_ip. %d", resp.status)
-            continue
-
-        full_list.extend(json.loads(resp.read().decode()))
-
-    return full_list
-
-
-def _get_developer_doc() -> str | None:
-    """Pull developer doc from PagerDuty's GitHub page."""
-    override_url = os.getenv("PDIPGATHER_URL")
-    override_route = os.getenv("PDIPGATHER_ROUTE")
-
-    url = override_url if override_url else PDIPGATHER_URL
-    route = override_route if override_route else PDIPGATHER_ROUTE
-
+    Returns:
+        String content returned from GET of target url/route, can be empty
+    """
     conn = HTTPSConnection(host=url, timeout=TIMEOUT_SECONDS)
 
-    conn.request("GET", route)
+    conn.request("GET", route if route.startswith("/") else f"/{route}")
     resp = conn.getresponse()
 
     if resp.status not in range(200, 300):
-        log.error("Failed to get a proper response from GitHub. %d", resp.status)
-        return None
+        log.error("Invalid response from %s, %s. %d", url, route, resp.status)
+        return ""
 
     return resp.read().decode()
 
 
-def get_safelist() -> set[str]:
-    """Return all safelist IPs (US and Euro region) in the form of a list."""
-    doc_set = set(_extract_ip_addresses(_get_developer_doc() or ""))
-    app_set = set(_get_appsite_webhooks())
-    return doc_set.union(app_set)
+def _get_webhooks_ips(region: str | None = None, new_source: bool = True) -> list[str]:
+    """
+    Pull webhook IPs from PagerDuty's source(s).
+
+    Args:
+        region: Valid values are `US` or `EU`, case agnostic. `None` will pull both
+        new_source: Use the new developer doc source for IPs.
+    """
+    sources = SOURCE_ROUTES if new_source else OLD_SOURCE_ROUTES
+    regions = [region.lower()] if region is not None else list(SOURCE_ROUTES.keys())
+
+    full_list: list[str] = []
+
+    for target_region in regions:
+
+        url, route = sources[target_region]
+
+        result = _get_url_page(url, route)
+
+        if result:
+            full_list.extend(json.loads(result))
+
+    return full_list
+
+
+def get_all_safelist() -> set[str]:
+    """Return all safelist IPs (US and Euro region) in the form of a set."""
+    us_set = get_us_safelist()
+    eu_set = get_eu_safelist()
+    return us_set.union(eu_set)
+
+
+def get_us_safelist() -> set[str]:
+    """Return all safelist IPs from US region in the form of a set."""
+    ips = _get_webhooks_ips("us")
+    if datetime.utcnow() < WEBHOOKSITE_EOL:
+        ips.extend(_get_webhooks_ips("us", False))
+    return set(ips)
+
+
+def get_eu_safelist() -> set[str]:
+    """Return all safelist IPs from EU region in the form of a set."""
+    ips = _get_webhooks_ips("eu")
+    if datetime.utcnow() < WEBHOOKSITE_EOL:
+        ips.extend(_get_webhooks_ips("eu", False))
+    return set(ips)
 
 
 def _console_output() -> int:
-    """Print all safelist IPs, new-line separated, to the stdout."""
-    print("\n".join(get_safelist()))
+    """Display results to console."""
+    cli = {"us": get_us_safelist, "eu": get_eu_safelist}
+    arg = sys.argv[1].lower() if len(sys.argv) > 1 else "all"
+    result = cli.get(arg, get_all_safelist)()
+    print("\n".join(result))
     return 0
 
 
