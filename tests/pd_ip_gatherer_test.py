@@ -121,3 +121,24 @@ def test_appsite_post_eol_date() -> None:
 
     finally:
         pdip.WEBHOOKSITE_EOL = hold_value
+
+
+@pytest.mark.parametrize(
+    ("url", "route", "expected"),
+    (
+        (
+            "raw.githubusercontent.com",
+            "/Preocts/pagerduty-safelist-gatherer/main/tests/fixture_sample.md",
+            True,
+        ),
+        (
+            "raw.githubusercontent.com",
+            "/Preocts/pagerduty-safelist-gatherer/main/tests/not_there.md",
+            False,
+        ),
+    ),
+)
+def test_get_url_page(url: str, route: str, expected: bool) -> None:
+    result = pdip._get_url_page(url, route)
+
+    assert bool(result) is expected

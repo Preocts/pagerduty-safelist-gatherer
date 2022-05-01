@@ -63,6 +63,29 @@ def _extract_ip_addresses(text: str) -> list[str]:
     return IP_PATTERN.findall(text)
 
 
+def _get_url_page(url: str, route: str) -> str:
+    """
+    HTTPS GET request a url, return the text of the response.
+
+    Args:
+        url: URL of page to pull, exclude HTTPS:// (e.g. "app.pagerduty.com")
+        route: Route following url. e.g. "/webhook_ip"
+
+    Returns:
+        String content returned from GET of target url/route, can be empty
+    """
+    conn = HTTPSConnection(host=url, timeout=TIMEOUT_SECONDS)
+
+    conn.request("GET", route if route.startswith("/") else f"/{route}")
+    resp = conn.getresponse()
+
+    if resp.status not in range(200, 300):
+        log.error("Invalid response from %s, %s. %d", url, route, resp.status)
+        return ""
+
+    return resp.read().decode()
+
+
 def _get_appsite_webhooks() -> list[str]:
     """Pull IPs from app.pagerduty.com/webhook_ips site. Ends function on 05/05/2022"""
     if datetime.utcnow() > WEBHOOKSITE_EOL:
