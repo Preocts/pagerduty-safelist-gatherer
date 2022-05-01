@@ -35,9 +35,9 @@ Example Usage:
 
         import pd_ip_gatherer
 
-        full_ip_list = pd_ip_gatherer.get_all_safelist
-        eu_ip_list = pd_ip_gatherer.get_eu_safelist
-        us_ip_list = pd_ip_gatherer.get_us_safelist
+        full_ip_list = pd_ip_gatherer.get_all_safelist()
+        eu_ip_list = pd_ip_gatherer.get_eu_safelist()
+        us_ip_list = pd_ip_gatherer.get_us_safelist()
 """
 from __future__ import annotations
 
