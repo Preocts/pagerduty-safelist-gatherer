@@ -6,10 +6,7 @@
 
 Gather PagerDuty webhook IP safelist from their help documents repo.
 
-This replaces an extremely useful endpoint being removed on 05/05/2022 at 14:00UTC.
-
 IPs pulled can include both US and EU ranges or from a specific region.
-Until 05/05/2022 both sources of truth are pulled and compiled into a single return.
 
 Support Documentation:
 
