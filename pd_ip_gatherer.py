@@ -1,10 +1,7 @@
 """
 Gather PagerDuty webhook IP safelist from their help documents repo.
 
-This replaces an extremely useful endpoint being removed on 05/05/2022 at 14:00UTC.
-
 IPs pulled can include both US and EU ranges or from a specific region.
-Until 05/05/2022 both sources of truth are pulled and compiled into a single return.
 
 Support Documentation:
 
@@ -44,7 +41,6 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from datetime import datetime
 from http.client import HTTPSConnection
 
 
@@ -58,17 +54,8 @@ SOURCE_ROUTES: dict[str, list[str]] = {
         "/ip-safelists/webhooks-eu-service-region-json",
     ],
 }
-OLD_SOURCE_ROUTES: dict[str, list[str]] = {
-    "us": ["app.pagerduty.com", "/webhook_ips"],
-    "eu": ["app.eu.pagerduty.com", "/webhook_ips"],
-}
-
 
 TIMEOUT_SECONDS = 3
-
-# Documented end of life date for programmatic endpoint
-# https://support.pagerduty.com/docs/safelist-ips#webhooks
-WEBHOOKSITE_EOL = datetime(2022, 5, 5, 14, 0, 0, 0)
 
 log = logging.getLogger(__name__)
 
@@ -104,14 +91,13 @@ def _get_webhooks_ips(region: str | None = None, new_source: bool = True) -> lis
         region: Valid values are `US` or `EU`, case agnostic. `None` will pull both
         new_source: Use the new developer doc source for IPs.
     """
-    sources = SOURCE_ROUTES if new_source else OLD_SOURCE_ROUTES
     regions = [region.lower()] if region is not None else list(SOURCE_ROUTES.keys())
 
     full_list: list[str] = []
 
     for target_region in regions:
 
-        url, route = sources[target_region]
+        url, route = SOURCE_ROUTES[target_region]
 
         result = _get_url_page(url, route)
 
@@ -130,18 +116,12 @@ def get_all_safelist() -> set[str]:
 
 def get_us_safelist() -> set[str]:
     """Return all safelist IPs from US region in the form of a set."""
-    ips = _get_webhooks_ips("us")
-    if datetime.utcnow() < WEBHOOKSITE_EOL:
-        ips.extend(_get_webhooks_ips("us", False))
-    return set(ips)
+    return set(_get_webhooks_ips("us"))
 
 
 def get_eu_safelist() -> set[str]:
     """Return all safelist IPs from EU region in the form of a set."""
-    ips = _get_webhooks_ips("eu")
-    if datetime.utcnow() < WEBHOOKSITE_EOL:
-        ips.extend(_get_webhooks_ips("eu", False))
-    return set(ips)
+    return set(_get_webhooks_ips("eu"))
 
 
 def _console_output() -> int:
