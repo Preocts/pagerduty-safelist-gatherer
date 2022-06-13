@@ -4,6 +4,7 @@ repos:
     rev: "v4.2.0"
     hooks:
       - id: check-json
+      - id: check-toml
       - id: check-yaml
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -18,7 +19,7 @@ repos:
 
   # Adds a standard feel to import segments
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.0.1
+    rev: v3.1.0
     hooks:
       - id: reorder-python-imports
         args: [--py3-plus]
@@ -42,9 +43,12 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies: [flake8-builtins]
+        args:
+          - --ignore=W503,E203
+          - --max-line-length=88
 
   # Type enforcement for Python
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.942
+    rev: v0.960
     hooks:
       - id: mypy
