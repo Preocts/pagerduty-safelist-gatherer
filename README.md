@@ -116,11 +116,17 @@ call the version of the interpreter used to create the `venv`
 Install editable library and development requirements:
 
 ```bash
-# Update pip and tools
-python -m pip install --upgrade pip wheel setuptools
+# Update pip and install flit
+python -m pip install --upgrade pip flit
 
 # Install development requirements
 python -m pip install -r requirements-dev.txt
+
+# Install package
+flit install
+
+# Optional: install editable package (pip install -e)
+flit install --symlink
 ```
 
 Install pre-commit [(see below for details)](#pre-commit):
@@ -142,13 +148,24 @@ pre-commit run --all-files
 Run tests:
 
 ```bash
-tox
+tox [-r] [-e py3x]
 ```
 
 To deactivate (exit) the `venv`:
 
 ```bash
 deactivate
+```
+
+---
+
+## Note on flake8:
+
+`flake8` is included in the `requirements-dev.txt` of the project. However it disagrees with `black`, the formatter of choice, on max-line-length and two general linting errors. `.pre-commit-config.yaml` is already configured to ignore these. `flake8` doesn't support `pyproject.toml` so be sure to add the following to the editor of choice as needed.
+
+```ini
+--ignore=W503,E203
+--max-line-length=88
 ```
 
 ---
@@ -172,9 +189,9 @@ Makefile.
 
 | PHONY             | Description                                                        |
 | ----------------- | ------------------------------------------------------------------ |
-| `init`            | Update pip, setuptools, and wheel to newest version                |
-| `install-dev`     | install development requirements and project                       |
-| `install`         | install project                                                    |
+| `init`            | Install/Update pip and flit                                        |
+| `install`         | install project and requirements                                   |
+| `install-dev`     | install dev requirements, project as editable, and pre-commit      |
 | `build-dist`      | Build source distribution and wheel distribution                   |
 | `clean-artifacts` | Deletes python/mypy artifacts including eggs, cache, and pyc files |
 | `clean-tests`     | Deletes tox, coverage, and pytest artifacts                        |
