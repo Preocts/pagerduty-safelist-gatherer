@@ -30,7 +30,7 @@ dependencies = []
 example = []
 
 [project.urls]
-homepage = "https://github.com/[your repo]/[repo name]"
+homepage = "https://github.com/Preocts/pagerduty-safelist-gatherer"
 # documentation = ""
 # repository = ""
 # changelog = ""
