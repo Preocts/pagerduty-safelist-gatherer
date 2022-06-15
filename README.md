@@ -118,16 +118,16 @@ Install editable library and development requirements:
 
 ```bash
 # Update pip and install flit
-python -m pip install --upgrade pip flit
+python -m pip install --upgrade pip setuptools
 
 # Install development requirements
 python -m pip install -r requirements-dev.txt
 
 # Install package
-flit install
+python -m pip install .
 
-# Optional: install editable package (pip install -e)
-flit install --symlink
+# Optional: install editable package
+python -m pip install --editable .
 ```
 
 Install pre-commit [(see below for details)](#pre-commit):
@@ -190,11 +190,11 @@ Makefile.
 
 | PHONY             | Description                                                        |
 | ----------------- | ------------------------------------------------------------------ |
-| `init`            | Install/Update pip and flit                                        |
+| `init`            | Install/Update pip and setuptools                                  |
 | `install`         | install project and requirements                                   |
 | `install-dev`     | install dev requirements, project as editable, and pre-commit      |
 | `build-dist`      | Build source distribution and wheel distribution                   |
-| `clean-artifacts` | Deletes python/mypy artifacts including eggs, cache, and pyc files |
+| `clean-artifacts` | Deletes python/mypy artifacts, cache, and pyc files                |
 | `clean-tests`     | Deletes tox, coverage, and pytest artifacts                        |
 | `clean-build`     | Deletes build artifacts                                            |
 | `clean-all`       | Runs all clean scripts                                             |
