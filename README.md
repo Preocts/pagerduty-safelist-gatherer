@@ -5,6 +5,12 @@
 [![Python package](https://github.com/Preocts/pagerduty-safelist-gatherer/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/Preocts/pagerduty-safelist-gatherer/actions/workflows/python-tests.yml)
 [![codecov](https://codecov.io/gh/Preocts/pagerduty-safelist-gatherer/branch/main/graph/badge.svg?token=EIDUMNN6UA)](https://codecov.io/gh/Preocts/pagerduty-safelist-gatherer)
 
+## Public Archived
+
+### [Moved to new repo here](https://github.com/Preocts/pd-utils)
+
+---
+
 Gather PagerDuty webhook IP safelist from their help documents repo.
 
 IPs pulled can include both US and EU ranges or from a specific region.
@@ -188,13 +194,13 @@ This repo has a Makefile with some quality of life scripts if the system
 supports `make`.  Please note there are no checks for an active `venv` in the
 Makefile.
 
-| PHONY             | Description                                                        |
-| ----------------- | ------------------------------------------------------------------ |
-| `init`            | Install/Update pip and setuptools                                  |
-| `install`         | install project and requirements                                   |
-| `install-dev`     | install dev requirements, project as editable, and pre-commit      |
-| `build-dist`      | Build source distribution and wheel distribution                   |
-| `clean-artifacts` | Deletes python/mypy artifacts, cache, and pyc files                |
-| `clean-tests`     | Deletes tox, coverage, and pytest artifacts                        |
-| `clean-build`     | Deletes build artifacts                                            |
-| `clean-all`       | Runs all clean scripts                                             |
+| PHONY             | Description                                                   |
+| ----------------- | ------------------------------------------------------------- |
+| `init`            | Install/Update pip and setuptools                             |
+| `install`         | install project and requirements                              |
+| `install-dev`     | install dev requirements, project as editable, and pre-commit |
+| `build-dist`      | Build source distribution and wheel distribution              |
+| `clean-artifacts` | Deletes python/mypy artifacts, cache, and pyc files           |
+| `clean-tests`     | Deletes tox, coverage, and pytest artifacts                   |
+| `clean-build`     | Deletes build artifacts                                       |
+| `clean-all`       | Runs all clean scripts                                        |
